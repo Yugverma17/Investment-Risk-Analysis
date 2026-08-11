@@ -5,7 +5,9 @@ I started this as a single Jupyter notebook that picked stocks based on Sharpe r
 It covers ~220 large and mid-cap NSE stocks, 2015 through mid-2025.
 
 **[Live dashboard →](https://investment-risk-analysis.streamlit.app/)**
-&nbsp;·&nbsp; [Methodology](docs/methodology.md) &nbsp;·&nbsp; [PRD](docs/PRD.md) &nbsp;·&nbsp; [Interview prep](docs/interview_prep.md)
+&nbsp;·&nbsp; [How it works, explained from zero](docs/HOW_IT_WORKS.md) &nbsp;·&nbsp; [Methodology](docs/methodology.md) &nbsp;·&nbsp; [PRD](docs/PRD.md) &nbsp;·&nbsp; [Interview prep](docs/interview_prep.md)
+
+New here, or non-technical? Start with **[How it works, explained from zero](docs/HOW_IT_WORKS.md)** — it walks through the entire project in plain language, with no assumed knowledge, down to line-by-line explanations of the important code.
 
 ---
 
