@@ -1,0 +1,8 @@
+strategy,sharpe_diff,ci_95_low,ci_95_high,bootstrap_p,active_t_stat,active_p,PSR,DSR,significant_5pct
+equal_weight,0.412,-0.026,0.843,0.064,2.22,0.026,0.982,0.774,False
+inverse_vol,0.377,-0.05,0.806,0.091,1.98,0.047,0.978,0.747,False
+min_variance,0.344,-0.102,0.814,0.171,1.3,0.195,0.974,0.72,False
+risk_parity,0.408,-0.02,0.857,0.065,2.07,0.038,0.982,0.772,False
+max_sharpe,0.505,0.014,0.986,0.042,2.48,0.013,0.991,0.842,True
+score_based,0.445,-0.044,0.914,0.07,2.37,0.018,0.986,0.8,False
+min_variance (sample cov),0.34,-0.108,0.807,0.177,1.27,0.203,0.973,0.717,False

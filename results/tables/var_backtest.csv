@@ -1,0 +1,5 @@
+,n_obs,n_breaches,expected,breach_rate,kupiec_p,christoffersen_p,cc_p,verdict
+historical@95%,1572,88,78.6,0.056,0.2854,0.0111,0.0224,REJECT
+historical@99%,1572,22,15.7,0.014,0.1333,0.4292,0.237,PASS
+parametric@95%,1572,69,78.6,0.0439,0.257,0.1114,0.1481,PASS
+parametric@99%,1572,31,15.7,0.0197,0.0006,0.6417,0.0026,REJECT
