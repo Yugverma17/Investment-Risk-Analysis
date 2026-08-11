@@ -1,0 +1,21 @@
+# Runtime dependencies for the deployed Streamlit app (app/streamlit_app.py).
+# Dev-only tools (pytest, ruff) are intentionally excluded — see pyproject.toml
+# for the full dependency spec including the [dev] extra used locally.
+# Pinned to match the versions this project was built and tested against
+# (see requirements-lock.txt for the complete frozen environment).
+
+pandas==3.0.5
+numpy==2.5.2
+scipy==1.18.0
+scikit-learn==1.9.0
+statsmodels==0.14.6
+yfinance==1.5.2
+pyarrow==25.0.1
+matplotlib==3.11.1
+seaborn==0.13.2
+lightgbm==4.7.0
+arch==8.0.0
+tqdm==4.70.0
+tabulate==0.10.0
+streamlit==1.59.1
+plotly==6.9.0
