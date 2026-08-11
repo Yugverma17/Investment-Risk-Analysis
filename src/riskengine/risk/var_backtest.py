@@ -1,14 +1,15 @@
 """VaR validation.
 
-A VaR number that has never been backtested is decoration. These tests answer
-two separate questions:
+A VaR number nobody ever backtested is just decoration. These two tests
+answer different questions:
 
-  Kupiec (unconditional coverage) — did we breach the right NUMBER of times?
-  Christoffersen (independence)   — were the breaches spread out, or clustered?
+  Kupiec (unconditional coverage) - did we breach the right NUMBER of times?
+  Christoffersen (independence)   - were the breaches spread out, or clustered?
 
-A model can pass Kupiec and fail Christoffersen: it breaches 5% of the time,
-but all the breaches land in one week of March 2020. That model is useless for
-risk management, and only the joint test catches it.
+A model can pass Kupiec and still fail Christoffersen — breaching 5% of the
+time overall, but with every single breach landing in the same week of March
+2020. That model is useless for actual risk management, and only the joint
+test would catch it.
 """
 
 from __future__ import annotations

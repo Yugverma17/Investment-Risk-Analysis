@@ -1,12 +1,13 @@
 """Portfolio allocators.
 
-Every allocator has the same signature and returns a weight Series summing to 1
-over the assets it was given. That uniformity is what makes the horse race in
-`backtest.walk_forward` a fair comparison rather than an apples-to-oranges one.
+Every allocator here has the same signature and returns a weight Series that
+sums to 1 over whatever assets it was given. That uniformity is what makes
+the strategy comparison in `backtest.walk_forward` a fair fight instead of
+apples-to-oranges.
 
-Optimisation uses scipy SLSQP rather than a dedicated convex solver. For the
-problem sizes here (20-40 assets, linear constraints, quadratic objective) SLSQP
-converges reliably and removes a heavyweight dependency — see
+Optimization uses scipy's SLSQP instead of a dedicated convex solver. At this
+problem size (20-40 assets, linear constraints, quadratic objective) it
+converges reliably and I didn't need a heavier dependency — reasoning's in
 docs/decisions/ADR-002-slsqp-over-cvxpy.md.
 """
 
@@ -61,9 +62,10 @@ def _sector_constraints(cons: Constraints, assets: list[str]) -> list[dict]:
 def equal_weight(returns: pd.DataFrame, cons: Constraints, **_) -> pd.Series:
     """1/N.
 
-    The baseline that matters. DeMiguel, Garlappi & Uppal (2009) showed 1/N beats
-    most optimised portfolios out of sample once estimation error is accounted
-    for. If a strategy in this project cannot beat 1/N, that is the finding.
+    This is the baseline that actually matters. DeMiguel, Garlappi & Uppal
+    (2009) showed 1/N beats most "optimized" portfolios out of sample once
+    you account for estimation error. If a strategy here can't beat 1/N,
+    that's the finding — not a failure to hide.
     """
     assets = list(returns.columns)
     return apply_caps(pd.Series(1.0, index=assets), cons.effective_max_weight(len(assets)))
@@ -72,9 +74,9 @@ def equal_weight(returns: pd.DataFrame, cons: Constraints, **_) -> pd.Series:
 def inverse_volatility(returns: pd.DataFrame, cons: Constraints, **_) -> pd.Series:
     """Weight proportional to 1/sigma — risk parity's diagonal approximation.
 
-    Ignores correlations entirely, which is a real limitation, but it needs no
-    matrix inversion and is therefore immune to the ill-conditioning that
-    wrecks min-variance.
+    Completely ignores correlations, which is a real limitation. But it also
+    needs no matrix inversion at all, so it's immune to the ill-conditioning
+    problem that trips up min-variance.
     """
     assets = list(returns.columns)
     vol = returns.std(ddof=1).replace(0, np.nan)
@@ -94,9 +96,9 @@ def min_variance(
 ) -> pd.Series:
     """Global minimum-variance portfolio.
 
-    Uses shrunk covariance by default. With the raw sample covariance this
-    allocator produces extreme, unstable weights — that failure is demonstrated
-    deliberately in notebook 03 rather than hidden.
+    Uses shrunk covariance by default. Feed it raw sample covariance instead
+    and the weights get extreme and unstable fast — I show that failure
+    directly in notebook 03 instead of just avoiding it quietly.
     """
     assets = list(returns.columns)
     n = len(assets)
@@ -134,8 +136,9 @@ def risk_parity(
     Each asset contributes the same share of total portfolio variance:
         RC_i = w_i * (Sigma w)_i / (w' Sigma w)  ->  1/n for all i
 
-    Unlike inverse-vol, this accounts for correlations, so two highly correlated
-    banks share one bank's worth of risk budget instead of two.
+    Unlike inverse-vol, this actually accounts for correlations — so two
+    highly correlated banks end up sharing one bank's worth of risk budget
+    instead of getting counted as two independent risks.
     """
     assets = list(returns.columns)
     n = len(assets)
@@ -176,10 +179,11 @@ def max_sharpe(
 ) -> pd.Series:
     """Tangency portfolio — classic Markowitz.
 
-    Included precisely because it is the textbook answer and it tends to
-    disappoint out of sample: it is maximally sensitive to expected-return
-    estimates, which are the noisiest inputs in finance. Showing that
-    empirically is more valuable than omitting it.
+    I included this specifically because it's the textbook answer and it
+    tends to disappoint out of sample — it's maximally sensitive to
+    expected-return estimates, which are about the noisiest input you can
+    feed a finance model. Better to show that empirically than leave it out
+    and let someone assume Markowitz is the obvious best choice.
     """
     assets = list(returns.columns)
     n = len(assets)
@@ -214,7 +218,7 @@ def max_sharpe(
 
 
 # --------------------------------------------------------------------------
-# The original notebook's approach, rebuilt
+# My original notebook's approach, rebuilt properly
 # --------------------------------------------------------------------------
 
 
@@ -227,15 +231,16 @@ def score_based(
 ) -> pd.Series:
     """Weight proportional to a cross-sectional score.
 
-    This is the original project's method, with three corrections:
+    This is my original method from the first version of this project, with
+    three fixes:
 
-    1. Min-max normalisation is replaced by cross-sectional z-scores. Min-max is
-       destroyed by a single outlier — one stock with a freak Sharpe compresses
-       every other stock into a narrow band near zero.
-    2. Weights come from a softmax over z-scores rather than from normalised
-       scores directly, so a stock with a below-average score gets a small
-       weight rather than a *negative-then-clipped-to-zero* weight.
-    3. Concentration caps are enforced afterwards.
+    1. Min-max normalisation got replaced by cross-sectional z-scores. Min-max
+       gets wrecked by a single outlier — one stock with a freak Sharpe
+       compresses every other stock into a narrow band near zero.
+    2. Weights now come from a softmax over the z-scores instead of straight
+       normalisation, so a below-average stock still gets a small weight
+       instead of getting clipped to zero.
+    3. Concentration caps get enforced afterward.
     """
     assets = list(returns.columns)
     if scores is None:

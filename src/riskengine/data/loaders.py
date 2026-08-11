@@ -1,15 +1,14 @@
-"""Market data acquisition with on-disk caching.
+"""Downloads market data and caches it to disk so I only pay for it once.
 
-Design notes
-------------
-* We store the full OHLCV panel, not just close. Range-based volatility
-  estimators (Parkinson, Garman-Klass) in `features.volatility` need high/low,
-  and they are materially more efficient than close-to-close estimators.
-* `auto_adjust=True` gives split- and dividend-adjusted OHLC. Using raw close
-  would inject fake -50% returns on every split, which is the single most
-  common data bug in retail backtests.
-* Everything is cached to parquet. A cold fetch of the full universe takes
-  several minutes; no analysis step should ever pay that cost twice.
+A few things worth knowing:
+* I keep the full OHLCV panel, not just close, because the range-based vol
+  estimators (Parkinson, Garman-Klass) need high/low and are noticeably
+  better than close-to-close ones.
+* `auto_adjust=True` gives split/dividend-adjusted prices. Skipping this is
+  probably the most common bug in DIY backtests — every stock split shows up
+  as a fake -50% crash otherwise.
+* Everything gets cached to parquet. A cold fetch of the whole universe takes
+  a few minutes and I didn't want to pay that cost more than once.
 """
 
 from __future__ import annotations

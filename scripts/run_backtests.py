@@ -1,8 +1,7 @@
-"""Phase 4 + 5 experiment: the strategy horse race, end to end.
+"""The strategy horse race, end to end — this produces every number and
+figure the README cites.
 
     python scripts/run_backtests.py [--no-vol-model] [--quick]
-
-Produces every number and figure the README cites.
 """
 
 from __future__ import annotations

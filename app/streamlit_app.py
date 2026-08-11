@@ -3,9 +3,9 @@
 Run with:
     streamlit run app/streamlit_app.py
 
-The app is a thin presentation layer. All the actual analytics (metrics, VaR,
-allocators, backtest) live in `riskengine` and are unit-tested there — this
-file does formatting and layout only.
+This file is just presentation. All the real analytics (metrics, VaR,
+allocators, backtest) live in `riskengine` and get unit-tested there — this
+is only formatting and layout on top.
 """
 
 from __future__ import annotations
@@ -314,24 +314,24 @@ with tab_about:
     st.subheader("What this is")
     st.markdown(
         """
-RiskLens is a walk-forward-backtested portfolio construction engine over ~120 liquid NSE stocks
-(2015–2025). It is a resume / learning project, **not financial advice**, and should not be used
-to make real investment decisions.
+RiskLens is a walk-forward-backtested portfolio construction engine I built over ~120 liquid NSE
+stocks (2015–2025). It's a resume / learning project, **not financial advice**, and shouldn't be
+used to make real investment decisions.
 
-**Known limitations — read before trusting a number:**
+**Limitations worth knowing before trusting any number here:**
 
-1. **Survivorship bias.** The universe is a current-membership snapshot, not point-in-time. See
-   [`docs/methodology.md`](../docs/methodology.md) for the mitigations applied and why they're
-   partial.
-2. **A constant 6.5% risk-free rate** is used throughout instead of the actual time-varying G-Sec
-   yield.
-3. **Transaction costs (15bps)** are a reasonable estimate for discount-broker delivery trades, not
-   a live quote.
-4. **VaR assumes the recent past represents the near future.** The backtest tab shows exactly how
-   often that assumption failed.
+1. **Survivorship bias.** The universe is a current snapshot, not a point-in-time reconstruction.
+   See [`docs/methodology.md`](../docs/methodology.md) for what I did to soften it and why that's
+   only a partial fix.
+2. **A flat 6.5% risk-free rate** is used throughout instead of the actual G-Sec yield, which moved
+   around over this period.
+3. **15bps transaction costs** is a reasonable estimate for a discount broker's delivery trades, not
+   a live number.
+4. **VaR assumes the recent past looks like the near future.** The backtest tab shows exactly how
+   often that assumption didn't hold.
 
-Full methodology, every formula, and the ADRs behind each design choice: see the `docs/` folder in
-the repository.
+Every formula and the reasoning behind each design decision is written up in the `docs/` folder of
+the repo.
 """
     )
     st.caption("Built with pandas, scikit-learn, LightGBM, arch, scipy, and Streamlit.")

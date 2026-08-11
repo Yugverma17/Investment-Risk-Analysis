@@ -1,9 +1,9 @@
 """Cross-sectional stock scoring from a training window.
 
-This is the module that turns "which stocks look good right now?" into numbers.
-Everything here consumes ONLY the training slice it is handed — the walk-forward
-engine is responsible for never handing it future data, and
-`tests/test_leakage.py` verifies that contract.
+This is the module that turns "which stocks look good right now?" into
+actual numbers. Everything here only ever touches the training slice it's
+handed — it's on the walk-forward engine to never pass it future data, and
+`tests/test_leakage.py` is what actually checks that promise holds.
 """
 
 from __future__ import annotations
@@ -23,10 +23,10 @@ def compute_metrics(
 ) -> pd.DataFrame:
     """Per-stock risk/return metrics over the training window.
 
-    Stocks with fewer than `min_obs` observations in the window are excluded —
-    a stock that listed two months ago has no estimable beta, and letting it
-    through with a noisy estimate is how newly-listed names end up dominating
-    a score-ranked portfolio.
+    Stocks with fewer than `min_obs` observations get excluded here — a stock
+    that listed two months ago doesn't have an estimable beta, and letting it
+    through with a garbage-noisy estimate is exactly how newly-listed names
+    end up dominating a score-ranked portfolio.
     """
     valid = train_returns.columns[train_returns.notna().sum() >= min_obs]
     R = train_returns[valid]
@@ -84,8 +84,9 @@ def compute_metrics(
 def zscore(s: pd.Series, winsor: float = 3.0) -> pd.Series:
     """Cross-sectional z-score, winsorised at +/- `winsor` sigma.
 
-    Winsorising matters: without it a single stock that 5x'd sets the scale for
-    the entire ranking and every other stock's score collapses toward zero.
+    This actually matters — without winsorising, one stock that 5x'd sets the
+    scale for the whole ranking and every other stock's score collapses
+    toward zero.
     """
     s = s.astype(float)
     sd = s.std(ddof=1)
@@ -97,10 +98,10 @@ def zscore(s: pd.Series, winsor: float = 3.0) -> pd.Series:
 def composite_score(metrics: pd.DataFrame, weights: dict[str, float]) -> pd.Series:
     """Weighted sum of z-scored metrics.
 
-    Negative weights mean "less is better" (volatility, beta, VaR). Because
-    every component is z-scored first, the weights are directly comparable —
-    which was not true of the original min-max approach, where a weight of 0.3
-    on volatility and 0.3 on Sharpe did not mean equal influence.
+    Negative weights mean "less is better" (volatility, beta, VaR). Since
+    every component gets z-scored first, the weights are actually comparable
+    to each other — which wasn't true in my original min-max version, where a
+    weight of 0.3 on volatility and 0.3 on Sharpe didn't mean equal say.
     """
     if metrics.empty:
         return pd.Series(dtype=float)

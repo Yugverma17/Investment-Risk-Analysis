@@ -1,9 +1,10 @@
 """Value-at-Risk and Conditional VaR.
 
-Sign convention: every function returns VaR as a POSITIVE number representing a
-loss. VaR of 0.023 at 95% means "on 5% of days we expect to lose more than
-2.3%". Mixing sign conventions is how VaR code silently produces nonsense, so
-it is fixed here once and asserted in tests.
+One convention to remember: every function here returns VaR as a POSITIVE
+number representing a loss. VaR of 0.023 at 95% means "on 5% of days I'd
+expect to lose more than 2.3%." Mixing sign conventions is a classic way VaR
+code quietly produces nonsense, so I nailed it down once here and check it in
+tests instead of trusting myself to remember.
 """
 
 from __future__ import annotations
@@ -26,9 +27,9 @@ def parametric_var(returns: pd.Series, confidence: float = 0.95, horizon: int = 
     """Gaussian (variance-covariance) VaR.
 
     Fast and closed-form, but it assumes normality. Indian equity returns have
-    fat tails and negative skew, so this systematically UNDERSTATES tail risk —
-    which is precisely what `var_backtest.kupiec_test` is used to demonstrate
-    rather than assert.
+    fat tails and negative skew, so this systematically understates tail risk.
+    I show that directly rather than just claiming it — see the Kupiec
+    backtest in `var_backtest.py`.
     """
     r = _as_array(returns)
     z = stats.norm.ppf(1 - confidence)
@@ -92,11 +93,12 @@ def monte_carlo_var(
 
 
 def conditional_var(returns: pd.Series, confidence: float = 0.95, horizon: int = 1) -> float:
-    """CVaR / Expected Shortfall: the mean loss *given* the VaR level is breached.
+    """CVaR / Expected Shortfall: the mean loss given that VaR was breached.
 
-    CVaR is the metric a regulator would ask for and VaR is the one a textbook
-    teaches. CVaR is sub-additive (diversification can never make it worse),
-    VaR is not — which is a genuine defect of VaR, not a technicality.
+    CVaR is the number a regulator would actually ask for; VaR is the one
+    every textbook teaches first. CVaR is sub-additive (diversifying can
+    never make it worse) and VaR technically isn't — a real shortcoming of
+    VaR, not just a technicality.
     """
     r = _as_array(returns)
     threshold = np.quantile(r, 1 - confidence)

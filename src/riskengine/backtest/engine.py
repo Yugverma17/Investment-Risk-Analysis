@@ -1,18 +1,19 @@
 """Walk-forward backtest engine.
 
-The rules, stated once so they can be checked
----------------------------------------------
-1. At each rebalance date `t`, the allocator sees returns strictly up to and
-   including `t`. Nothing after `t` is available to it, ever.
-2. Weights decided at `t` are applied at the CLOSE of `t` and earn returns from
-   `t+1` onwards. Trading on the same day's close using that day's data is the
-   most common look-ahead bug in retail backtests; the +1 shift removes it.
-3. Between rebalances, weights DRIFT with prices. They are not silently reset to
-   target every day — that would be a free daily rebalance nobody pays for.
-4. Transaction costs are charged on the drifted-to-target difference at each
-   rebalance, so a strategy that churns is penalised for churning.
-5. The benchmark and every strategy are evaluated on exactly the same date
-   range, which is the walk-forward period only — never the training burn-in.
+The rules I'm following, written down once so they're actually checkable:
+1. At each rebalance date `t`, the allocator only sees returns up through and
+   including `t`. Nothing after `t` is ever available to it.
+2. Weights decided at `t` get applied at `t`'s close and start earning
+   returns from `t+1` onward. Trading on the same day's close using that
+   day's own data is probably the most common look-ahead bug in DIY
+   backtests, and the +1 shift removes it structurally instead of trusting me
+   to remember the rule.
+3. Between rebalances, weights drift with prices instead of getting silently
+   reset to target every day — nobody gets a free daily rebalance in real life.
+4. Transaction costs get charged on the drifted-to-target difference at each
+   rebalance, so a strategy that churns actually pays for churning.
+5. The benchmark and every strategy get evaluated on the exact same date
+   range — the walk-forward period only, never the training burn-in.
 """
 
 from __future__ import annotations

@@ -1,9 +1,9 @@
 """Performance and risk-adjusted return metrics.
 
-All functions take a *daily* simple-return Series unless stated otherwise, and
-return annualised figures. Conventions are stated explicitly because the single
-most common source of disagreement between two backtests is that one of them
-annualised with 365 and the other with 252.
+Everything here takes a daily simple-return Series unless I say otherwise,
+and returns annualised numbers. Spelling out these conventions because half
+the time two backtests disagree it's just because one used 365 days and the
+other used 252.
 """
 
 from __future__ import annotations
@@ -41,12 +41,12 @@ def annual_vol(returns: pd.Series) -> float:
 
 
 def sharpe_ratio(returns: pd.Series, rf_annual: float = RISK_FREE_ANNUAL) -> float:
-    """Annualised Sharpe using *excess* daily returns.
+    """Annualised Sharpe using excess daily returns.
 
-    Note the subtlety the original notebook missed: subtracting an annual rf
-    from an annualised mean is fine, but the denominator must be the vol of
-    excess returns. With a constant rf the two coincide; with a time-varying rf
-    they do not, so we do it the correct way from the start.
+    One thing my original notebook got sloppy about: subtracting an annual rf
+    from an annualised mean is fine, but the denominator needs to be the vol
+    of the *excess* returns, not the raw returns. With a constant rf those
+    happen to coincide, but I wanted it right in general.
     """
     ex = returns.dropna() - daily_rf(rf_annual)
     sd = ex.std(ddof=1)
@@ -63,9 +63,9 @@ def sortino_ratio(
 ) -> float:
     """Sharpe's downside-only cousin.
 
-    The denominator divides by the count of ALL observations, not just the
-    downside ones — that is the standard definition, and using only downside
-    days would make a portfolio look better the more rarely it lost money.
+    Denominator divides by ALL observations, not just the downside ones —
+    that's the standard definition. Dividing only by downside days would make
+    a portfolio look artificially better just for losing money less often.
     """
     ex = returns.dropna() - daily_rf(rf_annual)
     downside = np.minimum(ex - mar, 0.0)

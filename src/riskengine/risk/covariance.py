@@ -1,16 +1,15 @@
 """Covariance estimation for portfolio optimisation.
 
-Why this module exists
-----------------------
-With N=120 stocks and T=756 daily observations (3 years), the sample covariance
-matrix has 7,260 free parameters estimated from ~90,000 numbers. It is
-technically invertible but wildly ill-conditioned: its smallest eigenvalues are
-almost pure noise, and a mean-variance optimiser will pile weight into exactly
-those directions because they look like free risk reduction.
+With around 120 stocks and 756 daily observations (3 years), the sample
+covariance matrix has 7,260 free parameters estimated from roughly 90,000
+numbers. It's technically invertible but badly ill-conditioned — the smallest
+eigenvalues are basically pure noise, and a mean-variance optimizer will pile
+weight into exactly those directions because they look like free risk
+reduction.
 
-This is *the* reason naive Markowitz portfolios blow up out of sample. Shrinkage
-fixes it, and swapping sample covariance for Ledoit-Wolf is the single
-highest-leverage change in the whole optimisation stack.
+This is basically THE reason naive Markowitz portfolios blow up out of
+sample. Swapping sample covariance for Ledoit-Wolf shrinkage was probably the
+single highest-leverage change I made in the whole optimization stack.
 """
 
 from __future__ import annotations
@@ -124,11 +123,12 @@ def cov_from_vols(
     Sigma = D * C * D, where D = diag(forecast vol) and C is the (shrunk)
     historical correlation matrix.
 
-    This is how the Phase 5 volatility model actually enters the portfolio:
-    correlations are relatively stable and estimable from history, while
-    volatility is the part that moves and is worth forecasting. Replacing only
-    the diagonal isolates the model's contribution — any performance change is
-    attributable to the vol forecast and nothing else.
+    This is how the volatility model actually feeds into the portfolio:
+    correlations are relatively stable and can be estimated from history,
+    while volatility is the part that actually moves and is worth
+    forecasting. Only touching the diagonal isolates exactly what the model
+    contributes — any change in performance is attributable to the vol
+    forecast and nothing else.
     """
     base = ledoit_wolf_cov(returns, annualise=True) if shrink else sample_cov(returns)
     sd = np.sqrt(np.diag(base.to_numpy()))

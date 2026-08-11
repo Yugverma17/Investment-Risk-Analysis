@@ -1,8 +1,7 @@
-"""Data quality auditing and panel construction.
+"""Checks the data for problems instead of quietly hoping it's fine.
 
-The point of this module is to make the data's flaws *visible and quantified*
-rather than silently absorbed into the backtest. Every filter applied here is
-counted and reported.
+Every filter here gets counted and shows up in the quality report, rather
+than silently dropping bad rows into the backtest.
 """
 
 from __future__ import annotations

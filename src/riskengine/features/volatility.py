@@ -1,11 +1,11 @@
 """Volatility estimators.
 
-Close-to-close realised volatility throws away the intraday range. Range-based
-estimators (Parkinson, Garman-Klass, Rogers-Satchell) use the same number of
-days to produce a far less noisy estimate — Parkinson is roughly 5x more
-efficient than close-to-close, Garman-Klass roughly 7x. That efficiency is
-exactly what a 21-day forecasting window needs, so these become the core
-features of the volatility model in `models.vol_forecast`.
+Plain close-to-close realised vol throws away the intraday range. The
+range-based ones here (Parkinson, Garman-Klass, Rogers-Satchell) use the same
+number of days but come out a lot less noisy — Parkinson is roughly 5x more
+efficient than close-to-close, Garman-Klass around 7x. That's exactly what a
+21-day forecasting window needs, which is why these end up as the core
+features for the volatility model in `models.vol_forecast`.
 """
 
 from __future__ import annotations
@@ -27,9 +27,9 @@ def ewma_vol(
 ) -> pd.DataFrame | pd.Series:
     """RiskMetrics EWMA volatility.
 
-    lam=0.94 is the RiskMetrics daily standard. This is the benchmark the ML
-    model in Phase 5 has to beat — it is a genuinely strong baseline, which is
-    why beating it means something.
+    lam=0.94 is the RiskMetrics daily standard. This is the benchmark my ML
+    model has to beat, and it's a genuinely strong baseline, so beating it
+    actually means something.
     """
     var = returns.pow(2).ewm(alpha=1 - lam, adjust=False).mean()
     vol = np.sqrt(var)

@@ -1,20 +1,20 @@
 """Statistical significance testing for backtest results.
 
-Why bother
-----------
-A backtest that reports "Sharpe 0.94 vs benchmark 0.71" invites the question
-nobody usually asks: is that difference distinguishable from luck over ~7 years
-of data? Usually it is not. These functions produce the confidence interval that
-answers it, and the project reports that interval rather than the point estimate
-alone.
+A backtest that reports "Sharpe 0.94 vs benchmark 0.71" kind of dodges the
+question nobody usually asks: over ~7 years of data, is that difference
+actually distinguishable from luck? Usually it isn't. These functions build
+the confidence interval that answers that, and I report the interval instead
+of just the point estimate.
 
-Two effects are handled:
+Two things I had to handle carefully:
 
-* Autocorrelation — daily returns are not i.i.d., so a naive bootstrap
+* Autocorrelation — daily returns aren't i.i.d., so a plain bootstrap
   understates the standard error. The stationary bootstrap (Politis & Romano)
-  resamples blocks of random length, preserving short-range dependence.
-* Multiple testing — trying six strategies and reporting the best one inflates
-  the winner's Sharpe. `deflated_sharpe_ratio` adjusts for exactly that.
+  resamples in randomly-sized blocks instead, which preserves short-range
+  dependence.
+* Multiple testing — trying six strategies and reporting whichever one looks
+  best inflates that winner's Sharpe. `deflated_sharpe_ratio` corrects for
+  exactly that.
 """
 
 from __future__ import annotations

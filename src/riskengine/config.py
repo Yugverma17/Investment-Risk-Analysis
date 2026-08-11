@@ -1,7 +1,5 @@
-"""Central configuration.
-
-Every tunable that affects a reported number lives here, so a result in the
-README can be traced back to an exact parameter set.
+"""All the tunables live here so I can trace any number in the README back to
+the exact settings that produced it.
 """
 
 from __future__ import annotations
@@ -54,11 +52,11 @@ MAX_MISSING_FRAC = 0.05  # drop a stock if >5% of trading days are missing in-wi
 
 @dataclass(frozen=True)
 class RiskProfile:
-    """A risk profile is a *constraint set plus a scoring preference*.
+    """A risk profile = hard constraints + scoring preference.
 
-    The original notebook expressed profiles only as scoring weights. Weights
-    alone do not bound concentration, so a "Conservative" portfolio could still
-    put 60% in one name. Profiles here carry hard constraints too.
+    My original notebook only had scoring weights, which meant a
+    "Conservative" portfolio could theoretically still dump 60% into one
+    stock. Added actual constraints here so that can't happen.
     """
 
     name: str

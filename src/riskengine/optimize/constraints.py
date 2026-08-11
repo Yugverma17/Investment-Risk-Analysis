@@ -1,9 +1,10 @@
 """Portfolio constraints and candidate selection.
 
-Constraints are kept separate from the optimisers so that every allocator —
-including the trivial ones like equal-weight — is subject to the *same* rules.
-Otherwise a comparison between strategies is really a comparison between
-constraint sets, which is the most common way backtest comparisons go wrong.
+I kept constraints separate from the optimizers so every allocator — even
+the trivial ones like equal-weight — plays by the same rules. Otherwise a
+"comparison between strategies" quietly turns into a comparison between
+constraint sets instead, which is a really easy way for a backtest to
+mislead you without anyone noticing.
 """
 
 from __future__ import annotations
@@ -76,10 +77,10 @@ def correlation_filter(
 ) -> list[str]:
     """Drop the lower-ranked member of any pair correlated above `threshold`.
 
-    This is the notebook's original idea, kept because it is sound, but with two
-    fixes: it walks the ranking in order (so the decision is deterministic
-    rather than dependent on column order), and it compares against the set of
-    already-kept names rather than the full universe.
+    This was my original notebook's idea, kept because it's a sound one, but
+    with two fixes: it walks the ranking in order now (so the outcome is
+    deterministic instead of depending on column order), and it checks
+    against the names already kept rather than the whole universe.
     """
     corr = returns.corr().abs()
     ordered = [t for t in ranking.sort_values(ascending=False).index if t in corr.columns]
@@ -100,10 +101,10 @@ def select_candidates(
 ) -> list[str]:
     """Rank -> de-correlate -> sector-cap -> take top n.
 
-    Order matters: de-correlating *before* truncating means we consider the full
-    ranked list when hunting for diversifiers, instead of only the top 25 (which
-    would defeat the point, since the top 25 by Sharpe in Indian equities are
-    frequently 12 banks).
+    Order matters here: de-correlating before truncating means the full
+    ranked list gets considered when hunting for diversifiers, not just the
+    top 25 — which would defeat the point, since the top 25 by Sharpe in
+    Indian equities is frequently just 12 banks.
     """
     scores = scores.dropna()
     if scores.empty:

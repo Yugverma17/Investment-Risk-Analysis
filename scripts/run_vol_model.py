@@ -1,9 +1,8 @@
-"""Phase 5 experiment: volatility forecasting horse race.
+"""Volatility forecasting horse race: LightGBM vs. EWMA vs. GARCH.
 
     python scripts/run_vol_model.py [--no-garch]
 
-Outputs
--------
+Outputs:
 results/tables/vol_model_comparison.csv   model scores (RMSE / MAE / QLIKE / R2)
 results/tables/vol_dm_tests.csv           Diebold-Mariano significance tests
 results/tables/vol_feature_importance.csv LightGBM gain by feature

@@ -1,16 +1,15 @@
 """Feature panel construction for the volatility model.
 
-Every feature here is computable from information available at time `t`. The
-target is realised volatility over `(t, t+21]`. The separation is enforced
-structurally — features come from `.rolling()` (backward-looking) and the target
-from a negative `.shift()` — and asserted in `tests/test_leakage.py`.
+Every feature here only uses information available at time `t`. The target
+is realised volatility over `(t, t+21]`. This separation is enforced
+structurally, not just by convention — features come from `.rolling()`
+(backward-looking) and the target from a negative `.shift()` — and I check
+it directly in `tests/test_leakage.py`.
 
-Sampling
---------
-Observations are taken at MONTH-ENDS, not daily. Daily sampling of a 21-day
-forward target produces massively overlapping windows: consecutive observations
-share 20 of 21 days. That does not add information, it just inflates the apparent
-sample size and makes every error bar look 5x tighter than it is.
+I sample at month-ends, not daily. Sampling daily against a 21-day-forward
+target creates massively overlapping windows (consecutive rows share 20 of
+21 days), which doesn't add real information, just inflates the apparent
+sample size and makes every error bar look about 5x tighter than it really is.
 """
 
 from __future__ import annotations

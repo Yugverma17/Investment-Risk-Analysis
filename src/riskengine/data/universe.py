@@ -1,25 +1,18 @@
-"""Investable universe: large- and mid-cap NSE names with sector labels.
+"""The investable universe: large/mid-cap NSE names with sector labels.
 
-SURVIVORSHIP BIAS — read this before trusting any backtest number
------------------------------------------------------------------
-This list is a *current-membership snapshot* of the Nifty 100 plus a set of
-liquid mid-caps. It is NOT point-in-time. A stock that was in the index in 2016
-and was later delisted or demoted does not appear here, so the backtest never
-gets to lose money on it.
+Quick note on survivorship bias before anyone trusts a backtest number: this
+is a snapshot of what the Nifty 100 + liquid mid-caps look like today, not a
+point-in-time reconstruction. A stock that was in the index in 2016 and got
+delisted or demoted since then just isn't here, so the backtest never had a
+chance to lose money on it. I couldn't find a free source for real
+point-in-time NSE constituent history, so instead I: kept known
+underperformers in the list on purpose (IDEA, BHEL, SAIL, ZEEL, PAYTM,
+RBLBANK, IDFCFIRSTB, INDUSTOWER...) instead of only listing winners, compare
+everything against equal-weight *of this same universe* so the relative
+comparison stays meaningful even though survivorship inflates both sides, and
+never lead with a bare absolute return number.
 
-Free point-in-time NSE constituent history does not exist. Rather than pretend
-otherwise, the project does three things:
-
-1. Deliberately retains names that performed *badly* over the sample
-   (IDEA, BHEL, SAIL, ZEEL, PAYTM, RBLBANK, IDFCFIRSTB, INDUSTOWER...) so the
-   universe is not purely a winners' list.
-2. Compares every strategy against an equal-weight portfolio *of the same
-   universe*. Survivorship inflates both sides, so the relative comparison —
-   which is what the project actually claims — is far less contaminated than
-   the absolute CAGR.
-3. Reports absolute returns with an explicit caveat and never as the headline.
-
-See docs/methodology.md#survivorship for the full treatment.
+Full writeup in docs/methodology.md#survivorship.
 """
 
 from __future__ import annotations

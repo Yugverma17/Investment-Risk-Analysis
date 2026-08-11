@@ -1,103 +1,57 @@
 # Product Requirements — RiskLens
 
-## Problem
+## The problem
 
-Retail investors in India who want a diversified equity portfolio face three
-bad options: pay 1–2% AUM fees to an actively-managed mutual fund whose
-manager risk they can't evaluate; do it themselves with no systematic way to
-size positions or measure risk beyond "how much did I make"; or use a
-robo-advisor / smallcase that gives them a black-box allocation with no
-visibility into *why* it picked those weights or *how risky* the result
-actually is in rupee terms.
+If you're a retail investor in India and you want a diversified stock portfolio, your options aren't great. You can pay 1-2% AUM to an actively managed mutual fund and just trust the manager, with no real way to evaluate whether they're any good. You can DIY it, but then you're on your own for position sizing and risk measurement beyond "did I make money." Or you can use a robo-advisor or smallcase, which gives you an allocation without telling you *why* it picked those weights or *how risky* it actually is in terms you can understand.
 
-The specific gap: existing retail tools show past returns prominently and
-downside risk barely at all. A user rarely sees "if a bad month like March
-2020 happens again, you could lose ₹X" stated plainly before they invest.
+The specific gap I noticed: most of these tools show you past returns front and center, and downside risk almost as an afterthought. You rarely see something like "if a month like March 2020 happens again, you could lose ₹X" stated plainly before you put money in.
 
-## Users
+## Who this is for
 
-**Primary persona — "Rohan," 27, software engineer, Bangalore.**
-₹40k/month surplus, has read about SIPs and index funds, mildly convinced
-individual stock-picking beats an index fund but has no systematic way to do
-it. Currently either buys stocks his colleagues mention or defaults to a
-Nifty index fund out of decision paralysis. Wants to understand *why* a
-portfolio looks the way it does, not just receive a black-box number.
+**Rohan, 27, software engineer in Bangalore.** Has about ₹40k/month he could invest, has read up on SIPs and index funds, is halfway convinced picking stocks himself could beat an index fund but has no real system for doing it. Right now he either buys whatever his colleagues are talking about or just defaults to a Nifty index fund because he can't decide. What he actually wants is to understand *why* a portfolio looks the way it does, not just get handed a number.
 
-**Secondary persona — "Priya," 34, working parent, Mumbai.**
-Has ₹15L sitting in a savings account earmarked for a 7-year goal (child's
-education). Extremely loss-averse; the single number she cares about most is
-"how much could I lose in a bad year," not the expected return. Currently
-uses a mix of FDs and one mutual fund SIP because nothing gives her a direct
-answer to that question.
+**Priya, 34, working parent in Mumbai.** Has around ₹15L sitting in savings, earmarked for her kid's education in about 7 years. Very loss-averse — the number she actually cares about is "how much could I lose in a bad year," not the expected return. Right now she's stuck with FDs and one mutual fund SIP because nothing gives her a straight answer to that question.
 
-## Jobs to be done
+## What people actually need this to do
 
-1. When I have a lump sum or monthly surplus to invest, help me build a
-   diversified equity portfolio suited to how much loss I can tolerate, so I
-   don't have to research 100+ stocks myself.
-2. When I'm holding a portfolio, tell me in rupee terms — not just a
-   percentage — how much I could plausibly lose in a bad week/month, so I can
-   decide if that matches what I signed up for.
-3. When someone claims a strategy "beats the market," let me check whether
-   that claim would have survived costs and bad luck, so I don't get talked
-   into a strategy that only looks good in a cherry-picked backtest.
+1. When I have money to invest, help me build a diversified portfolio that matches how much loss I can actually stomach, without me having to research a hundred stocks myself.
+2. When I'm holding a portfolio, tell me in rupees — not a vague percentage — how much I could realistically lose in a bad week or month, so I can decide if that's something I signed up for.
+3. When someone claims a strategy "beats the market," give me a way to check if that claim would actually survive real costs and bad luck, so I don't get talked into something that only looks good because of a cherry-picked backtest.
 
 ## Scope
 
-### In scope (v1 — this project)
-- Risk-profile-driven portfolio construction (Conservative / Balanced /
-  Aggressive) over a fixed NSE large/mid-cap universe.
-- Walk-forward backtested comparison against 5 alternative strategies and the
-  Nifty 50, with transaction costs and statistical significance testing.
-- VaR/CVaR in rupee terms, backtested for calibration (Kupiec/Christoffersen).
-- 21-day volatility forecasting to demonstrate the risk model can be
-  data-driven rather than purely backward-looking.
-- A dashboard (Streamlit) surfacing all of the above for a chosen profile and
-  capital amount.
+### What's in this version
+- Risk-profile-driven portfolio construction (Conservative / Balanced / Aggressive) over a fixed set of NSE large/mid-cap stocks.
+- Walk-forward backtested comparison against 5 other strategies plus Nifty 50, with real transaction costs and statistical significance testing baked in.
+- VaR and CVaR shown in rupees, and backtested for calibration (Kupiec/Christoffersen), not just computed once and trusted.
+- A 21-day volatility forecasting model, mainly to show the risk model can actually be data-driven instead of purely backward-looking.
+- A Streamlit dashboard that ties all of this together for whatever profile and capital amount someone picks.
 
-### Explicitly out of scope (v1)
-- Live brokerage integration or order execution (this is an analysis tool,
-  not a trading system) — see Prohibited-action policy; no financial
-  transaction is ever executed by this software.
-- Personalized investment advice — outputs are educational/illustrative, not
-  a recommendation tailored to any individual's full financial situation.
-  See `docs/methodology.md` for every simplifying assumption.
-- Options, derivatives, debt instruments, or international equities.
-- Point-in-time historical index membership (see methodology §1 —
-  unavailable at zero cost; explicitly flagged as a limitation rather than
-  silently assumed away).
-- Real-time/intraday data — daily granularity only.
+### What's deliberately not in this version
+- No live brokerage integration or order execution — this stays an analysis tool, not something that actually trades. No financial transaction ever gets executed by any of this code.
+- No personalized investment advice. Everything here is educational, not a recommendation tailored to anyone's actual financial situation — every simplifying assumption is written out in `docs/methodology.md`.
+- No options, derivatives, debt instruments, or international equities.
+- No point-in-time historical index membership — I looked and couldn't find a free source for this, so I flagged it as a real limitation (see methodology §1) instead of quietly pretending the universe is historically accurate.
+- No real-time or intraday data. Daily granularity only.
 
-## Success metrics (how v1 would be evaluated if it had real users)
+## How I'd actually measure if this worked
 
-| Metric | Target | Why it's the right metric |
+| Metric | Target | Why this one |
 |---|---|---|
-| Backtested Sharpe improvement vs. Nifty 50, with 95% CI excluding zero | ≥1 of 6 strategies | A single strategy passing genuine significance testing is a stronger claim than six strategies each "beating the market" on a raw point estimate |
-| VaR calibration (Kupiec pass rate across confidence levels tested) | Reported transparently, not gamed | A risk product's core promise is honest risk disclosure — a "PASS" achieved by loosening the test would defeat the entire point |
-| Time from "pick a risk profile" to "see an allocation + risk report" | <5 seconds (cached data) | The dashboard's core loop must be fast enough to explore 3 profiles in one sitting |
-| Volatility forecast improvement vs. EWMA baseline (QLIKE), with DM-test significance | Statistically significant improvement | An ML feature that isn't demonstrably better than a 3-line baseline doesn't earn its complexity budget |
+| Backtested Sharpe improvement vs. Nifty 50, 95% CI excluding zero | At least 1 of 6 strategies | One strategy that actually passes a real significance test says more than six strategies each claiming to "beat the market" on a raw point estimate |
+| VaR calibration (Kupiec pass rate across confidence levels) | Reported honestly, not gamed | The whole point of a risk tool is honest disclosure — a "PASS" I got by loosening the test until it passes would defeat the purpose |
+| Time from picking a risk profile to seeing an allocation + risk report | Under 5 seconds with cached data | Someone should be able to flip through all 3 profiles in one sitting without getting bored waiting |
+| Volatility forecast improvement over EWMA (QLIKE), with DM-test significance | Statistically significant | If the ML model can't beat a 3-line baseline with actual statistical backing, it's not worth the added complexity |
 
-## Competitive landscape (brief)
+## Who else is doing this, briefly
 
-- **Smallcase** — thematic pre-built baskets, good UX, no visible risk
-  methodology or backtested significance testing; the user trusts the brand,
-  not a shown methodology.
-- **INDmoney / Groww "smart" portfolios** — similar black-box positioning;
-  strong on fund/stock discovery, weak on transparent risk quantification.
-- **Zerodha Varsity** — excellent risk *education* content, but no
-  personalized, backtested portfolio construction tool attached to it.
-- **RiskLens' differentiation**: every allocation decision is traceable to a
-  documented formula (`docs/methodology.md`), every backtest claim carries a
-  significance test, and every risk number is validated against what
-  actually happened historically rather than asserted once and left
-  unchecked.
+- **Smallcase** — nice pre-built thematic baskets, good UX, but no visible risk methodology or backtest significance testing. You're trusting the brand, not seeing the actual method.
+- **INDmoney / Groww's "smart" portfolios** — similar black-box feel. Good at fund/stock discovery, weak on actually showing you the risk math.
+- **Zerodha Varsity** — genuinely great risk *education* content, but it's not attached to any personalized, backtested portfolio tool.
+- **What RiskLens does differently**: every allocation decision traces back to a documented formula (`docs/methodology.md`), every backtest claim comes with a significance test attached, and every risk number gets checked against what actually happened historically instead of just being computed once and left alone.
 
-## Roadmap (beyond this iteration, not built)
+## If I kept building this
 
-- **Now**: ship v1 as scoped above.
-- **Next**: point-in-time universe via a paid data vendor; time-varying
-  risk-free rate; sector/factor exposure reporting.
-- **Later**: multi-goal planning (map several goals with different horizons
-  to different risk profiles simultaneously); paper-trading mode to track
-  live forward performance against the backtest, closing the loop between
-  claimed and realised results.
+- **Right now**: ship what's described above.
+- **Next**: a real point-in-time universe (would need a paid data vendor), a risk-free rate that actually moves over time instead of staying flat, sector/factor exposure reporting.
+- **Later**: handling multiple goals with different horizons and risk profiles at once, and a paper-trading mode that tracks live forward performance against what the backtest predicted — closing the loop between what I claimed and what actually happened.

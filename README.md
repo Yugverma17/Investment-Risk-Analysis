@@ -1,33 +1,19 @@
 # RiskLens — Portfolio Risk & Allocation Engine for Indian Equities
 
-A walk-forward-backtested portfolio construction engine over ~120 liquid NSE
-large/mid-cap stocks (2015–2025): six allocation strategies, transaction
-costs, statistical significance testing, VaR validated against what actually
-happened, and a LightGBM volatility forecaster benchmarked against GARCH.
+I started this as a single Jupyter notebook that picked stocks based on Sharpe ratio and beta, using monthly data and one train/test split. It "worked" in the sense that the numbers looked good, but I couldn't actually defend it if someone asked how I knew it wasn't just luck. So I rebuilt it properly: daily data going back to 2015, six different portfolio strategies tested against each other the way a real investor would experience them (no peeking at the future), realistic trading costs, and actual statistics to check whether any of it means anything.
 
-Started as a single notebook doing monthly-data mean-variance optimisation on
-one lucky train/test split. Rebuilt to answer a harder question: **does any
-of this survive contact with realistic costs, out-of-sample testing, and a
-statistical significance check** — and to report the answer honestly even
-when it's "not really."
+It covers ~120 large and mid-cap NSE stocks, 2015 through mid-2025.
 
-**[Live dashboard →](#)** _(add your deployed Streamlit Community Cloud link here)_
+**[Live dashboard →](#)** _(link goes here once deployed)_
 &nbsp;·&nbsp; [Methodology](docs/methodology.md) &nbsp;·&nbsp; [PRD](docs/PRD.md) &nbsp;·&nbsp; [Interview prep](docs/interview_prep.md)
 
 ---
 
-## The headline finding
+## The main thing I found
 
-Of six allocation strategies tested walk-forward against equal-weight over
-the same 120-stock universe, **only one showed a bootstrap 95% confidence
-interval on the Sharpe difference that excludes zero.** The rest were
-directionally positive but not statistically distinguishable from equal-weight
-luck. A LightGBM volatility model beat EWMA and GARCH baselines with
-significant Diebold-Mariano tests — but wiring that better forecast into the
-portfolio optimizer **did not uniformly improve returns.**
+I tested 6 allocation strategies walk-forward against a simple equal-weight portfolio, on the same 120 stocks. Only **one of them** — the max-Sharpe optimizer — actually beat equal-weight in a way that holds up statistically (95% confidence interval on the Sharpe difference doesn't touch zero). The other five looked better on paper but I can't say with confidence they weren't just lucky over this particular 7-year stretch.
 
-Neither of those is the result a hype-driven version of this project would
-report. Both are in the tables below, unedited.
+I also built a volatility-forecasting model with LightGBM that clearly beats EWMA and GARCH on prediction accuracy (statistically significant, not just a slightly better number). But when I actually plugged that better forecast into the portfolio optimizer, it didn't make the portfolio perform better. Two genuinely different things — being good at predicting volatility, and that prediction actually helping you make more money — and I think that's worth showing rather than hiding.
 
 <p align="center">
   <img src="results/figures/equity_curves.png" width="90%" alt="Equity curves: six strategies vs Nifty 50">
@@ -35,8 +21,7 @@ report. Both are in the tables below, unedited.
 
 ## Results
 
-_Run `python scripts/run_backtests.py` to regenerate every table and figure
-below from scratch — nothing here is hand-edited._
+Everything below comes straight out of `python scripts/run_backtests.py` — I didn't touch any of these numbers by hand.
 
 ### Strategy comparison (walk-forward, net of 15bps transaction costs)
 
@@ -51,10 +36,9 @@ below from scratch — nothing here is hand-edited._
 | min_variance (sample cov) | 18.6%  | 16.5%     |     0.73 |      1.02 | -30.7%  |     0.6  |   0.75 | 6.9%    | 0.48        | 64.0%     | 33.0%         | 0.5%       | 18.4%        | 9.4%    |  -0.69 |      16.64 |      0.16 |
 | Nifty 50 (buy & hold)     | 12.4%  | 17.6%     |     0.39 |      0.53 | -38.4%  |     0.32 |   1    | 0.0%    | —           | 0.0%      | —             | —          | 13.2%        | 7.7%    |  -1.13 |      18.48 |      0.07 |
 
-### Statistical significance vs. Nifty 50
+### Is any of this actually significant, or did I just get lucky?
 
-Stationary block bootstrap (2000 iterations), 95% CI on (strategy Sharpe −
-Nifty Sharpe). See [`docs/methodology.md §10`](docs/methodology.md#10-statistical-significance-backteststatspy).
+I ran a stationary block bootstrap (2000 iterations) on the Sharpe difference between each strategy and Nifty 50. If the 95% confidence interval doesn't cross zero, I'm calling it real. More on this in [Methodology §10](docs/methodology.md#10-statistical-significance-backteststatspy).
 
 | strategy                  |   sharpe_diff |   ci_95_low |   ci_95_high |   bootstrap_p |   active_t_stat |   active_p |   PSR |   DSR | significant_5pct   |
 |:--------------------------|--------------:|------------:|-------------:|--------------:|----------------:|-----------:|------:|------:|:-------------------|
@@ -66,7 +50,7 @@ Nifty Sharpe). See [`docs/methodology.md §10`](docs/methodology.md#10-statistic
 | score_based               |         0.445 |      -0.044 |        0.914 |         0.07  |            2.37 |      0.018 | 0.986 | 0.8   | False              |
 | min_variance (sample cov) |         0.34  |      -0.108 |        0.807 |         0.177 |            1.27 |      0.203 | 0.973 | 0.717 | False              |
 
-### Stress windows (total return)
+### How did these hold up during actual crashes?
 
 |                                    | equal_weight   | min_variance   | score_based   | Nifty 50   |
 |:-----------------------------------|:---------------|:---------------|:--------------|:-----------|
@@ -80,7 +64,11 @@ Nifty Sharpe). See [`docs/methodology.md §10`](docs/methodology.md#10-statistic
   <img src="results/figures/drawdowns.png" width="90%" alt="Drawdown comparison">
 </p>
 
-### VaR — backtested, not just computed
+Worth pointing out: during the 2022 rate-hike selloff and the late-2024 correction, my strategies actually lost *more* than plain Nifty did. Makes sense once you think about it — I'm holding 20-25 stocks, Nifty holds 50, so there's less diversification cushioning a broad, sector-agnostic drop.
+
+### VaR — and whether it actually held up
+
+Anyone can compute a Value-at-Risk number. The question is whether it's calibrated correctly, so I backtested it with Kupiec's test (did the number of breaches match what was expected?) and Christoffersen's test (were the breaches spread out, or all clumped together in one bad stretch?).
 
 |                |   n_obs |   n_breaches |   expected |   breach_rate |   kupiec_p |   christoffersen_p |   cc_p | verdict   |
 |:---------------|--------:|-------------:|-----------:|--------------:|-----------:|-------------------:|-------:|:----------|
@@ -92,6 +80,8 @@ Nifty Sharpe). See [`docs/methodology.md §10`](docs/methodology.md#10-statistic
 <p align="center">
   <img src="results/figures/var_breaches.png" width="90%" alt="VaR breach chart">
 </p>
+
+Historical VaR at 95% fails the Christoffersen test — the breaches weren't random, they clustered around the 2020 and 2022 crashes, which is a known weakness of this method during volatile periods. I'm leaving that REJECT in the table instead of quietly picking a different method that passes.
 
 ### Volatility forecasting: LightGBM vs. EWMA vs. GARCH(1,1)
 
@@ -107,7 +97,9 @@ Nifty Sharpe). See [`docs/methodology.md §10`](docs/methodology.md#10-statistic
   <img src="results/figures/vol_pred_vs_actual.png" width="90%" alt="Forecast vs realised volatility">
 </p>
 
-Diebold-Mariano significance tests: 
+And the significance tests (Diebold-Mariano) behind those numbers:
+
+
 
 | comparison                     | loss   |   DM_stat |   p_value |     n | verdict                   |
 |:-------------------------------|:-------|----------:|----------:|------:|:--------------------------|
@@ -119,7 +111,9 @@ Diebold-Mariano significance tests:
 | LightGBM vs GARCH(1,1)-t       | MSE    |    -8.608 |    0      | 10590 | LightGBM better (5%)      |
 
 
-### Does the better volatility forecast actually improve the portfolio?
+LightGBM clearly beats the naive random-walk and EWMA baselines. Against GARCH it wins on plain squared error but the difference isn't statistically significant on QLIKE (p ≈ 0.16), which is the metric that actually matters more for volatility forecasts. I could've just reported the MSE number and called it a clean win — didn't feel right.
+
+### Does the better forecast actually improve the portfolio, though?
 
 |                               | CAGR   | Ann.Vol   |   Sharpe |   Sortino | MaxDD   |   Calmar |   Beta | Alpha   |   InfoRatio | HitRate   | Ann.Return   | Ulcer   |   Skew |   Kurtosis |   Treynor |
 |:------------------------------|:-------|:----------|---------:|----------:|:--------|---------:|-------:|:--------|------------:|:----------|:-------------|:--------|-------:|-----------:|----------:|
@@ -128,84 +122,66 @@ Diebold-Mariano significance tests:
 | min_variance (historical vol) | 18.6%  | 16.5%     |     0.74 |      1.02 | -30.8%  |     0.6  |   0.75 | 6.9%    |        0.49 | 64.0%     | 18.4%        | 9.4%    |  -0.71 |      16.73 |      0.16 |
 | risk_parity (historical vol)  | 21.2%  | 18.2%     |     0.8  |      1.09 | -33.3%  |     0.64 |   0.87 | 8.5%    |        0.77 | 57.3%     | 20.9%        | 9.5%    |  -1.09 |      15.66 |      0.17 |
 
-**No, not uniformly** — see [Methodology §11](docs/methodology.md#11-volatility-forecasting-models) for why a lower-error forecast doesn't automatically make a better optimizer input.
+Short answer: not really, or at least not consistently. See [Methodology §11](docs/methodology.md#11-volatility-forecasting-models) for my best guess at why — a better volatility number doesn't necessarily make a better input to an optimizer that's sensitive to a different kind of estimation error.
 
 ---
 
-## What this project deliberately does *not* claim
+## What I'm *not* claiming
 
-- **Not investment advice.** Outputs are educational/illustrative.
-- **Survivorship bias in the universe** is real and unresolved — see
-  [Methodology §1](docs/methodology.md#1-universe-and-survivorship-bias). The
-  universe is a current-membership snapshot, not point-in-time, so absolute
-  returns are inflated. Every headline comparison is therefore relative
-  (strategy vs. equal-weight vs. Nifty, same universe), not a single CAGR.
-- **A constant 6.5% risk-free rate** is used throughout instead of the
-  time-varying G-Sec yield.
-- **15bps transaction costs** are a reasonable estimate for discount-broker
-  delivery trades, not a live quote.
+- **This isn't investment advice.** Treat it as a technical/analytical project, not a recommendation for anyone to put real money into.
+- **Survivorship bias is real here and I haven't fixed it.** The stock list is basically "large/mid-caps as they exist today," not what the index actually looked like in 2015. Free point-in-time constituent data doesn't really exist, so I mitigated it where I could (kept known underperformers like Vodafone Idea, BHEL, SAIL in the list) but the absolute return numbers are still inflated. That's why I lean on the relative comparisons — strategy vs. equal-weight vs. Nifty — rather than any single CAGR number. Details in [Methodology §1](docs/methodology.md#1-universe-and-survivorship-bias).
+- **The risk-free rate is a flat 6.5%** the whole way through, not the actual G-Sec yield which moved around a fair bit over this period.
+- **15bps transaction cost** is a reasonable estimate for a discount broker, not a live number.
 
-## Architecture
+## How it's organized
 
 ```
 src/riskengine/
-├── data/        universe definition, yfinance loader + parquet cache, quality audit
-├── features/    volatility estimators (Parkinson/GK/Rogers-Satchell), beta, momentum
-├── risk/        Sharpe/Sortino/Calmar/Treynor, VaR (4 methods) + Kupiec/Christoffersen
-│                backtesting, Ledoit-Wolf/OAS/EWMA covariance shrinkage
-├── optimize/    6 allocators (equal-wt, inverse-vol, min-var, risk-parity, max-Sharpe,
-│                score-based), constraints, cross-sectional scoring
-├── backtest/    walk-forward engine (costs, drift, turnover), bootstrap significance
-│                testing (PSR/DSR/Newey-West)
-├── models/      LightGBM volatility forecaster + feature panel, GARCH baseline
-└── report/      figures and result tables
+├── data/        which stocks to use, downloading + cleaning prices, data quality checks
+├── features/    volatility estimators, rolling beta, momentum
+├── risk/        Sharpe/Sortino/Calmar/Treynor, 4 VaR methods + backtesting, covariance shrinkage
+├── optimize/    the 6 portfolio strategies, position limits, stock scoring
+├── backtest/    the walk-forward simulator + statistical significance testing
+├── models/      the LightGBM volatility model and its features, GARCH baseline
+└── report/      turns results into charts and tables
 
-scripts/         fetch_data.py, run_vol_model.py, run_backtests.py — reproduce everything
-notebooks/       00_original (provenance) → 01_eda → 02_risk_engine → 03_results
-app/             Streamlit dashboard
-tests/           113 tests: known-answer checks, allocator contracts, and — most
-                 importantly — look-ahead-bias tests that corrupt future data and
-                 assert past decisions are unchanged
-docs/            PRD, methodology (every formula + assumption), ADRs, interview prep
+scripts/         run these to reproduce everything: fetch_data.py, run_vol_model.py, run_backtests.py
+notebooks/       00 is my original notebook, 01-03 walk through the rebuilt analysis
+app/             the Streamlit dashboard
+tests/           110 tests — the important ones check the code isn't cheating by peeking at future data
+docs/            why I made each decision, every formula, the PRD, interview prep notes
 ```
 
-## Reproduce it
+## How to run it
 
 ```bash
-# 1. Environment (Python 3.12; uv recommended, or plain pip -e ".[dev,app]")
+# 1. set up the environment (Python 3.12)
 uv venv --python 3.12 .venv
 uv pip install --python .venv/Scripts/python.exe -e ".[dev,app]"
 
-# 2. Data (≈2 min; caches to data/processed/, requires network access to Yahoo Finance)
+# 2. download the stock data (~2 min, needs internet)
 python scripts/fetch_data.py
 
-# 3. Volatility model (≈8 min: LightGBM walk-forward + GARCH(1,1) baseline)
+# 3. train the volatility model (~8 min — includes fitting GARCH per stock)
 python scripts/run_vol_model.py
 
-# 4. Full strategy backtest + significance tests (≈9 min)
+# 4. run the full backtest + stats (~9 min)
 python scripts/run_backtests.py
 
-# 5. Tests (offline, no network — runs on synthetic fixtures)
+# 5. run the tests (fast, works offline)
 pytest
 
-# 6. Dashboard
+# 6. open the dashboard
 streamlit run app/streamlit_app.py
 ```
 
-## Tech stack
+## Built with
 
-Python 3.12 · pandas / numpy / scipy · scikit-learn (Ledoit-Wolf, OAS) ·
-LightGBM · `arch` (GARCH) · statsmodels · scipy.optimize (SLSQP) · Streamlit +
-Plotly · pytest · ruff · GitHub Actions CI
+Python 3.12, pandas/numpy/scipy, scikit-learn (for covariance shrinkage), LightGBM, the `arch` package for GARCH, statsmodels, scipy.optimize, Streamlit + Plotly for the app, pytest, ruff, and GitHub Actions for CI.
 
-## Why this exists
+## Why I built it this way
 
-Built as a resume project for the 2026 placement cycle, aimed at data
-analyst / data scientist roles. The design goal was not "what gets the
-highest backtest number" but "what would survive someone with a finance
-background asking hard questions in an interview" — see
-[`docs/interview_prep.md`](docs/interview_prep.md) for the actual questions
-this invited and how each is answered from the numbers above.
+This started as a resume project for placement season, aimed at data analyst / data scientist roles. I could've optimized for "biggest number in the README" but decided to optimize for "can I actually answer follow-up questions about this in an interview." [`docs/interview_prep.md`](docs/interview_prep.md) has the questions I expect this to raise and how I'd answer each one from the actual numbers above.
 
 ## License
 

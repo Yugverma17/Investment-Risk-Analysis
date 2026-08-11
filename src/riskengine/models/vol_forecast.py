@@ -1,27 +1,24 @@
 """Volatility forecasting: LightGBM vs. EWMA vs. GARCH(1,1).
 
-The claim under test
---------------------
-Can a gradient-boosted model, given range-based estimators and market-state
-features, forecast 21-day-ahead realised volatility better than the two
-standard baselines?
+What I'm actually testing: can a gradient-boosted model, given range-based
+estimators and market-state features, forecast 21-day-ahead realised
+volatility better than the two standard baselines?
 
-Why volatility and not returns
-------------------------------
-Volatility is autocorrelated and clusters — the empirical fact behind every
-GARCH paper since 1986. It is genuinely forecastable. Returns, at daily and
-monthly horizons in liquid large-caps, essentially are not. Forecasting the
-thing that is actually forecastable is the entire methodological point of this
-phase, and it is why the baselines are strong rather than strawmen.
+Why volatility and not returns: volatility is autocorrelated and clusters —
+that's the empirical fact basically every GARCH paper since 1986 is built
+on — so it's genuinely something you can forecast. Returns, at daily and
+monthly horizons for liquid large-caps, essentially aren't. Forecasting the
+thing that's actually forecastable is the whole methodological point of this
+part of the project, which is also why I made sure the baselines here are
+strong and not strawmen.
 
-Evaluation
-----------
-* Walk-forward: train on everything before year Y, predict year Y, roll forward.
-  No fold ever sees its own future.
-* QLIKE alongside RMSE. RMSE on volatility over-weights high-vol names (a 10%
-  error on a 60% vol stock dwarfs a 10% error on a 15% vol stock). QLIKE is the
-  loss function the volatility literature uses precisely because it is robust
-  to that and to noise in the realised-vol proxy.
+On evaluation:
+* Walk-forward: train on everything before year Y, predict year Y, roll
+  forward. No fold ever sees its own future.
+* QLIKE alongside RMSE. RMSE on volatility over-weights the high-vol names —
+  a 10% error on a 60%-vol stock dwarfs a 10% error on a 15%-vol stock. QLIKE
+  is what the volatility literature actually uses, because it's robust to
+  that and to noise in the realised-vol proxy itself.
 """
 
 from __future__ import annotations
@@ -180,13 +177,13 @@ def walk_forward_predict(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Expanding-window walk-forward LightGBM.
 
-    For each year Y >= start_year: train on all rows dated before Y, predict Y.
+    For each year Y >= start_year: train on everything dated before Y, predict Y.
 
-    `log_target=True` regresses log(vol). Volatility is right-skewed and strictly
-    positive; modelling logs makes the residuals closer to symmetric, guarantees
-    positive predictions, and — because RMSE in log space is roughly a
-    percentage error — stops the loss being dominated by a handful of crisis
-    observations.
+    `log_target=True` regresses log(vol) instead of vol directly. Volatility
+    is right-skewed and strictly positive, so modelling the log makes the
+    residuals more symmetric, guarantees positive predictions, and — since
+    RMSE in log space works out to roughly a percentage error — keeps a
+    handful of crisis observations from dominating the whole loss.
     """
     import lightgbm as lgb
 
@@ -288,8 +285,8 @@ def diebold_mariano(
 ) -> tuple[float, float]:
     """Diebold-Mariano test: is model A's forecast loss significantly below B's?
 
-    Without this, "LightGBM beat EWMA by 4%" is an unsupported claim about a
-    difference that could easily be noise.
+    Without this, "LightGBM beat EWMA by 4%" is just a claim about a
+    difference that could easily be noise. This is what actually backs it up.
     """
     from scipy import stats
 
