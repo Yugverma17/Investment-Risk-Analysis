@@ -4,7 +4,7 @@ I started this as a single Jupyter notebook that picked stocks based on Sharpe r
 
 It covers ~120 large and mid-cap NSE stocks, 2015 through mid-2025.
 
-**[Live dashboard →](#)** _(link goes here once deployed)_
+**[Live dashboard →](https://investment-risk-analysis.streamlit.app/)**
 &nbsp;·&nbsp; [Methodology](docs/methodology.md) &nbsp;·&nbsp; [PRD](docs/PRD.md) &nbsp;·&nbsp; [Interview prep](docs/interview_prep.md)
 
 ---
