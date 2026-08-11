@@ -4,7 +4,7 @@ This is where I explain every formula and assumption behind the numbers in the R
 
 ## 1. Universe and survivorship bias {#survivorship}
 
-The universe (`src/riskengine/data/universe.py`) is 124 NSE large/mid-cap tickers across 12 sectors. I built it as a snapshot of what these sectors look like *today*, not a reconstruction of what the index actually contained back in 2015. I looked for free point-in-time constituent data and couldn't find any, so this is a real limitation I haven't solved. Two tickers (`LTIM.NS`, `TATAMOTORS.NS`) failed to download entirely — both got renamed/restructured on Yahoo Finance around 2025 corporate actions — and I excluded them rather than faking data for them. See `results/tables/data_quality_report.csv`.
+The universe (`src/riskengine/data/universe.py`) is 222 NSE large/mid-cap tickers across 21 sectors. I built it as a snapshot of what these sectors look like *today*, not a reconstruction of what the index actually contained back in 2015. I looked for free point-in-time constituent data and couldn't find any, so this is a real limitation I haven't solved. Two tickers (`LTIM.NS`, `TATAMOTORS.NS`) failed to download entirely — both got renamed/restructured on Yahoo Finance around 2025 corporate actions — and I excluded them rather than faking data for them. See `results/tables/data_quality_report.csv`.
 
 Why this actually matters: any stock that got delisted, went bankrupt, or dropped out of the index sometime between 2015 and now simply isn't in this dataset. That means the backtest never had a chance to lose money on it the way a real investor building this portfolio in 2015 would have. So the absolute return numbers (CAGR, Sharpe) are inflated relative to what someone actually investing back then would have experienced.
 
@@ -43,7 +43,7 @@ I left the results in `results/tables/var_backtest.csv` exactly as they came out
 
 ## 6. Covariance estimation (`risk/covariance.py`)
 
-With about 120 stocks and a 36-month training window (~756 days), sample covariance ends up with thousands of parameters estimated from a similar number of data points. The matrix is technically invertible, but its smallest eigenvalues are basically noise. And a mean-variance optimizer will happily exploit exactly those noisy directions because they look like free risk reduction — this is the standard explanation for why plain Markowitz portfolios tend to fall apart out of sample.
+With around 20-30 selected stocks per rebalance and a 36-month training window (~756 days), sample covariance ends up with hundreds of parameters estimated from a comparable number of data points. The matrix is technically invertible, but its smallest eigenvalues are basically noise. And a mean-variance optimizer will happily exploit exactly those noisy directions because they look like free risk reduction — this is the standard explanation for why plain Markowitz portfolios tend to fall apart out of sample.
 
 My default fix is Ledoit-Wolf shrinkage, pulling the covariance matrix toward a scaled identity matrix. The nice thing about it is the shrinkage amount is chosen analytically — no hyperparameter to tune. `results/tables/covariance_conditioning.json` shows how much this actually helps on this specific dataset.
 
@@ -82,7 +82,7 @@ Reporting "Sharpe 0.90 vs 0.39" on its own kind of dodges the real question: ove
 - **Probabilistic Sharpe Ratio (PSR)** and **Deflated Sharpe Ratio (DSR)**, from Bailey & López de Prado. PSR adjusts the Sharpe standard error for skew and kurtosis. DSR goes a step further and corrects for the fact that I tried six strategies and I'm reporting the best one — which is exactly the kind of thing that inflates results if you don't account for it.
 - A **Newey-West HAC t-statistic** on active returns (5 lags) as a second, independent sanity check.
 
-What actually came out of this: of the six strategies tested against equal-weight, only max-Sharpe has a bootstrap 95% CI on the Sharpe difference that doesn't touch zero. The rest look better on paper but I can't say they're statistically distinguishable from equal-weight over this sample. See `results/tables/significance_tests.csv`. I'm treating that as the actual finding rather than picking whichever strategy looked best and running with it.
+What actually came out of this: of the six strategies, each tested against the Nifty 50 benchmark, only plain equal-weight has a bootstrap 95% CI on the Sharpe difference that doesn't touch zero. The rest look better than Nifty on paper but I can't say they're statistically distinguishable from it over this sample. That's a genuinely interesting result on its own — the fancier allocators (max-Sharpe, min-variance, risk-parity) didn't hold up once the universe got noisier, which is exactly what estimation-error theory (DeMiguel, Garlappi & Uppal again) predicts: more assets to estimate expected returns and covariances for means more room for that estimation error to get exploited by an optimizer. See `results/tables/significance_tests.csv`. I'm treating that as the actual finding rather than picking whichever strategy looked best and running with it.
 
 ## 11. Volatility forecasting (`models/`)
 

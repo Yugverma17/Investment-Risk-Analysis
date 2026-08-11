@@ -4,7 +4,7 @@ Picking 2-3 of these depending on how much space I have. Rule I set for myself: 
 
 ## Primary (data analyst / data scientist roles)
 
-> Built a walk-forward-backtested portfolio allocation engine over 10 years of NSE equity data (120 stocks, 6 strategies), with transaction-cost modelling and bootstrap significance testing; found only 1 of 6 strategies beat equal-weight with a 95% CI excluding zero, and reported that as the headline result instead of the best-looking raw number.
+> Built a walk-forward-backtested portfolio allocation engine over 10 years of NSE equity data (220 stocks, 6 strategies), with transaction-cost modelling and bootstrap significance testing; found only 1 of 6 strategies (plain equal-weight) beat the Nifty 50 with a 95% CI excluding zero — the fancier optimizers didn't hold up, consistent with known estimation-error theory — and reported that as the headline result instead of the best-looking raw number.
 
 > Designed and backtested a Value-at-Risk framework (parametric, historical, Monte Carlo, Cornish-Fisher) validated with Kupiec and Christoffersen tests against realised returns; surfaced a Christoffersen rejection (breaches clustered around the 2020/2022 drawdowns) that a simple breach-count check would have missed entirely.
 

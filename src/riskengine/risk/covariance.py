@@ -1,11 +1,11 @@
 """Covariance estimation for portfolio optimisation.
 
-With around 120 stocks and 756 daily observations (3 years), the sample
-covariance matrix has 7,260 free parameters estimated from roughly 90,000
-numbers. It's technically invertible but badly ill-conditioned — the smallest
-eigenvalues are basically pure noise, and a mean-variance optimizer will pile
-weight into exactly those directions because they look like free risk
-reduction.
+With around 25 selected stocks per rebalance and 756 daily observations (3
+years), the sample covariance matrix has a few hundred free parameters
+estimated from around 19,000 numbers. It's technically invertible but still
+noticeably ill-conditioned — the smallest eigenvalues are mostly noise, and a
+mean-variance optimizer will pile weight into exactly those directions
+because they look like free risk reduction.
 
 This is basically THE reason naive Markowitz portfolios blow up out of
 sample. Swapping sample covariance for Ledoit-Wolf shrinkage was probably the

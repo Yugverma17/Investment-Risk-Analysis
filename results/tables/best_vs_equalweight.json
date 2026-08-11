@@ -1,8 +1,8 @@
 {
-  "best": "max_sharpe",
-  "diff": 0.09384190953832383,
-  "ci_low": -0.12361175261518313,
-  "ci_high": 0.3074026529831427,
-  "p_value": 0.4075,
+  "best": "equal_weight",
+  "diff": 0.0,
+  "ci_low": 0.0,
+  "ci_high": 0.0,
+  "p_value": 1.0,
   "n_obs": 1824
 }

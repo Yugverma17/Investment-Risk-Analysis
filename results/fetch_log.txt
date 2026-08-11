@@ -1,41 +1,46 @@
-﻿.\.venv\Scripts\python.exe : 17:24:54 INFO    universe: 124 tickers, 2015-01-01 to 2025-06-30
+﻿.\.venv\Scripts\python.exe : 23:05:19 INFO    universe: 222 tickers, 2015-01-01 to 2025-06-30
 At line:1 char:324
-+ ... ects\stock; .\.venv\Scripts\python.exe scripts\fetch_data.py 2>&1 | T ...
-+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (17:24:54 INFO  ...1 to 2025-06-30:String) [], RemoteException
++ ... ects\stock; .\.venv\Scripts\python.exe scripts\fetch_data.py --force  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (23:05:19 INFO  ...1 to 2025-06-30:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
-17:24:54 INFO    === benchmark ===
-17:24:54 INFO    downloading 1-1 of 1
-17:24:58 INFO    cached 2581 rows / 1 tickers to index_nsei_2015-01-01_2025-06-30.parquet
-17:24:58 INFO    benchmark: 2581 trading days (2015-01-02 to 2025-06-27)
-17:24:58 INFO    === India VIX ===
-17:24:58 INFO    downloading 1-1 of 1
-17:25:00 INFO    cached 2571 rows / 1 tickers to index_indiavix_2015-01-01_2025-06-30.parquet
-17:25:00 INFO    vix: 2571 obs
-17:25:00 INFO    === universe OHLCV ===
-17:25:00 INFO    downloading 1-20 of 124
-17:25:05 INFO    downloading 21-40 of 124
-17:25:12 INFO    downloading 41-60 of 124
-17:25:17 INFO    downloading 61-80 of 124
-17:25:21 ERROR   HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not 
+23:05:19 INFO    === benchmark ===
+23:05:19 INFO    downloading 1-1 of 1
+23:05:31 INFO    cached 2581 rows / 1 tickers to index_nsei_2015-01-01_2025-06-30.parquet
+23:05:31 INFO    benchmark: 2581 trading days (2015-01-02 to 2025-06-27)
+23:05:31 INFO    === India VIX ===
+23:05:31 INFO    downloading 1-1 of 1
+23:05:32 INFO    cached 2571 rows / 1 tickers to index_indiavix_2015-01-01_2025-06-30.parquet
+23:05:32 INFO    vix: 2571 obs
+23:05:32 INFO    === universe OHLCV ===
+23:05:32 INFO    downloading 1-20 of 222
+23:05:36 INFO    downloading 21-40 of 222
+23:05:39 INFO    downloading 41-60 of 222
+23:05:42 INFO    downloading 61-80 of 222
+23:05:46 INFO    downloading 81-100 of 222
+23:05:49 INFO    downloading 101-120 of 222
+23:05:52 INFO    downloading 121-140 of 222
+23:05:54 ERROR   HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not 
 found for symbol: LTIM.NS"}}}
-17:25:22 ERROR   $LTIM.NS: possibly delisted; no timezone found
-17:25:22 ERROR   
+23:05:55 ERROR   $LTIM.NS: possibly delisted; no timezone found
+23:05:55 ERROR   
 1 Failed download:
-17:25:22 ERROR   ['LTIM.NS']: possibly delisted; no timezone found
-17:25:23 INFO    downloading 81-100 of 124
-17:25:29 INFO    downloading 101-120 of 124
-17:25:34 ERROR   HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not 
+23:05:55 ERROR   ['LTIM.NS']: possibly delisted; no timezone found
+23:05:55 INFO    downloading 141-160 of 222
+23:05:58 INFO    downloading 161-180 of 222
+23:06:02 INFO    downloading 181-200 of 222
+23:06:05 ERROR   HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not 
 found for symbol: TATAMOTORS.NS"}}}
-17:25:34 ERROR   $TATAMOTORS.NS: possibly delisted; no timezone found
-17:25:35 ERROR   
+23:06:06 ERROR   $TATAMOTORS.NS: possibly delisted; no timezone found
+23:06:06 ERROR   
 1 Failed download:
-17:25:35 ERROR   ['TATAMOTORS.NS']: possibly delisted; no timezone found
-17:25:36 INFO    downloading 121-124 of 124
-17:25:39 INFO    cached 307367 rows / 122 tickers to ohlcv_2015-01-01_2025-06-30.parquet
-17:25:39 INFO    downloaded 307367 rows across 122 tickers
-17:25:40 INFO    data quality: {'ok': 122, 'download_failed': 2}
-17:25:40 INFO    clean panel: 2581 days x 122 tickers
-17:25:41 INFO    wrote processed panels to D:\Projects\stock\data\processed
-17:25:41 INFO    wrote quality report to D:\Projects\stock\results\tables\data_quality_report.csv
+23:06:06 ERROR   ['TATAMOTORS.NS']: possibly delisted; no timezone found
+23:06:07 INFO    downloading 201-220 of 222
+23:06:11 INFO    downloading 221-222 of 222
+23:06:12 INFO    cached 527893 rows / 220 tickers to ohlcv_2015-01-01_2025-06-30.parquet
+23:06:12 INFO    downloaded 527893 rows across 220 tickers
+23:06:13 INFO    data quality: {'ok': 220, 'download_failed': 2}
+23:06:13 INFO    clean panel: 2581 days x 220 tickers
+23:06:14 INFO    wrote processed panels to D:\Projects\stock\data\processed
+23:06:14 INFO    wrote quality report to D:\Projects\stock\results\tables\data_quality_report.csv

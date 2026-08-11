@@ -69,6 +69,32 @@ def load_strategy_returns() -> pd.DataFrame | None:
     return pd.read_parquet(path) if path.exists() else None
 
 
+def _rolling_horizon_stats(streams: pd.DataFrame, years: int, strategy: str = "score_based") -> dict | None:
+    """Distribution of realised `years`-year total returns from the actual
+    walk-forward backtest, using overlapping windows.
+
+    Ties the horizon slider to real backtested history instead of a made-up
+    projection. Returns None if the backtest doesn't cover enough history for
+    even one full window at this horizon — showing nothing is more honest
+    than extrapolating past what was actually tested.
+    """
+    col = strategy if strategy in streams.columns else streams.columns[0]
+    r = streams[col].dropna()
+    window = years * 252
+    if len(r) <= window:
+        return None
+    curve = (1 + r).cumprod()
+    rolled = (curve / curve.shift(window) - 1.0).dropna()
+    if rolled.empty:
+        return None
+    return {
+        "n_windows": int(len(rolled)),
+        "min": float(rolled.min()),
+        "median": float(rolled.median()),
+        "max": float(rolled.max()),
+    }
+
+
 @st.cache_data(show_spinner=False)
 def build_portfolio(close: pd.DataFrame, mkt: pd.Series, smap: dict, profile_key: str, n_select: int):
     profile = PROFILES[profile_key]
@@ -126,24 +152,22 @@ with tab_build:
         profile_key = st.select_slider(
             "Risk appetite", options=["conservative", "balanced", "aggressive"], value="balanced"
         )
-        capital = st.number_input("Capital to invest (₹)", min_value=10_000, value=500_000, step=10_000)
+        capital = st.number_input("Capital to invest (₹)", min_value=1_000, value=500_000, step=1_000)
         n_select = st.slider("Max number of holdings", 8, 30, 20)
-        horizon = st.selectbox("Investment horizon", ["1 year", "3 years", "5+ years"], index=1)
+        horizon_years = st.slider("Investment horizon (years)", 1, 10, 3)
 
         p = PROFILES[profile_key]
-        st.markdown(
-            f"""
-**{p.name} profile constraints**
+        with st.expander("What does this profile actually constrain?"):
+            st.markdown(
+                f"""
 - Max single-stock weight: **{p.max_weight:.0%}**
 - Minimum holdings: **{p.min_positions}**
 - Target volatility: **{f'{p.target_vol:.0%}' if p.target_vol else 'unconstrained'}**
+
+Scoring uses only the trailing 36 months of data as of the latest available price —
+the same rule the walk-forward backtest uses at every historical rebalance.
 """
-        )
-        st.caption(
-            "Scoring uses only the trailing 36 months of data as of the latest "
-            "available price — exactly the same rule the walk-forward backtest uses "
-            "at every historical rebalance."
-        )
+            )
 
     with st.spinner("Scoring the universe on the trailing 36-month window..."):
         weights, wmetrics, sub_train = build_portfolio(close, mkt, smap, profile_key, n_select)
@@ -163,13 +187,14 @@ with tab_build:
         c2.metric("Est. annual return", f"{port_ret:.1%}")
         c3.metric("Est. annual volatility", f"{port_vol_est:.1%}")
         c4.metric("Est. Sharpe", f"{(port_ret - 0.065) / port_vol_est:.2f}" if port_vol_est else "—")
-        st.caption(
-            "⚠️ These are trailing 36-month figures for stocks the model just selected "
-            "*because* they scored well over that window — not a forward-looking return "
-            "guarantee. It will read as optimistic almost by construction. The realistic "
-            "expectation is the walk-forward, out-of-sample result in the **Backtest vs "
-            "Nifty** tab, which is deliberately lower."
-        )
+        with st.expander("Why does the return number look high?"):
+            st.write(
+                "These are trailing 36-month figures for stocks the model just selected "
+                "*because* they scored well over that window — not a forward-looking "
+                "guarantee, and it will read as optimistic almost by construction. The "
+                "realistic expectation is the walk-forward, out-of-sample result in the "
+                "**Backtest vs Nifty** tab, which is deliberately lower."
+            )
 
         fig = go.Figure(
             go.Pie(
@@ -194,8 +219,12 @@ with tab_build:
                 "Beta": wmetrics["beta"],
             }
         ).sort_values("Weight", ascending=False)
+
+        show_detail = st.toggle("Show risk detail per stock (Sharpe, volatility, beta)", value=False)
+        simple_cols = ["Weight", "₹ Allocated", "Sector"]
+        display_cols = simple_cols + ["Sharpe (36m)", "Vol (36m, ann.)", "Beta"] if show_detail else simple_cols
         st.dataframe(
-            table.style.format(
+            table[display_cols].style.format(
                 {
                     "Weight": "{:.1%}",
                     "₹ Allocated": "₹{:,.0f}",
@@ -218,11 +247,36 @@ with tab_build:
         r1.metric("1-day VaR (95%)", f"₹{var_in_rupees(var95, capital):,.0f}", help="On 1 in 20 trading days, expect to lose at least this much.")
         r2.metric("1-day VaR (99%)", f"₹{var_in_rupees(var99, capital):,.0f}", help="On 1 in 100 trading days, expect to lose at least this much.")
         r3.metric("1-day CVaR (95%)", f"₹{var_in_rupees(cv95, capital):,.0f}", help="Average loss on the worst 5% of days.")
-        st.caption(
-            "VaR is estimated from the same 36-month window used for scoring, using the historical-quantile "
-            "method. It is validated out-of-sample in the **Risk report card** tab via Kupiec/Christoffersen "
-            "backtests — read that before trusting a single point estimate."
-        )
+        with st.expander("How was this estimated, and can I trust it?"):
+            st.write(
+                "VaR is estimated from the same 36-month window used for scoring, using the "
+                "historical-quantile method. It's validated out-of-sample in the **Risk report "
+                "card** tab via Kupiec/Christoffersen backtests — worth reading before trusting "
+                "a single point estimate."
+            )
+
+        st.subheader(f"Over a {horizon_years}-year horizon")
+        streams_preview = load_strategy_returns()
+        horizon_stats = _rolling_horizon_stats(streams_preview, horizon_years) if streams_preview is not None else None
+        if horizon_stats is None:
+            backtest_years = len(streams_preview) / 252 if streams_preview is not None else 0
+            st.info(
+                f"The walk-forward backtest only covers about {backtest_years:.0f} years, so there "
+                f"isn't a real {horizon_years}-year rolling window to show yet — showing a shorter "
+                "horizon here would be more honest than making one up. Try a shorter horizon, or see "
+                "the full history in the **Backtest vs Nifty** tab."
+            )
+        else:
+            h1, h2, h3 = st.columns(3)
+            h1.metric(f"Worst {horizon_years}-yr return", f"{horizon_stats['min']:.0%}")
+            h2.metric(f"Median {horizon_years}-yr return", f"{horizon_stats['median']:.0%}")
+            h3.metric(f"Best {horizon_years}-yr return", f"{horizon_stats['max']:.0%}")
+            st.caption(
+                f"Based on {horizon_stats['n_windows']} overlapping {horizon_years}-year windows from "
+                "the score-based strategy's actual walk-forward backtest — not a projection, just what "
+                "actually happened historically. Overlapping windows aren't independent, so treat this "
+                "as a rough sense of range, not a precise probability."
+            )
 
 # ========================================================== Backtest tab ===
 with tab_backtest:
@@ -237,9 +291,8 @@ with tab_backtest:
     else:
         st.subheader("Six strategies, one walk-forward test, net of costs")
         st.caption(
-            "Every strategy is trained on a rolling 36-month window, holds for 3 months, pays 15bps "
-            "transaction cost on every rupee traded, and is evaluated on the SAME window as every other "
-            "strategy and the Nifty 50 benchmark."
+            "Trained on a rolling 36-month window, held for 3 months, pays 15bps cost on every rupee "
+            "traded, evaluated on the same window as Nifty 50."
         )
 
         default_pick = [c for c in ["equal_weight", "score_based", "max_sharpe", "min_variance"] if c in streams.columns]
@@ -259,21 +312,31 @@ with tab_backtest:
             )
             st.plotly_chart(fig, use_container_width=True)
 
-        st.subheader("Results table")
-        st.dataframe(comparison.style.format(precision=3), use_container_width=True)
+        if sig is not None and "significant_5pct" in sig.columns:
+            n_sig = int(sig["significant_5pct"].astype(str).str.lower().eq("true").sum())
+            n_total = len(sig)
+            st.info(
+                f"**Bottom line:** of {n_total} strategies tested, **{n_sig}** beat equal-weight with a "
+                "95% confidence interval that actually excludes zero. The rest look better on paper but "
+                "aren't statistically distinguishable from luck over this sample — see the details below."
+            )
+
+        with st.expander("Full results table"):
+            st.dataframe(comparison.style.format(precision=3), use_container_width=True)
 
         if sig is not None:
-            st.subheader("Is any of this distinguishable from luck?")
-            st.caption(
-                "Bootstrap 95% CI on (strategy Sharpe − Nifty Sharpe), using a stationary block bootstrap "
-                "to respect autocorrelation. A CI that excludes zero is the bar for 'significant'."
-            )
-            st.dataframe(sig.style.format(precision=3), use_container_width=True)
+            with st.expander("Significance tests — is any of this distinguishable from luck?"):
+                st.caption(
+                    "Bootstrap 95% CI on (strategy Sharpe − Nifty Sharpe), using a stationary block "
+                    "bootstrap to respect autocorrelation. A CI that excludes zero is the bar for "
+                    "'significant'."
+                )
+                st.dataframe(sig.style.format(precision=3), use_container_width=True)
 
         stress = load_results_table("stress_tests.csv")
         if stress is not None:
-            st.subheader("Stress windows")
-            st.dataframe(stress.style.format("{:.1%}"), use_container_width=True)
+            with st.expander("Stress windows — how did these hold up during real crashes?"):
+                st.dataframe(stress.style.format("{:.1%}"), use_container_width=True)
 
 # ============================================================== Risk tab ===
 with tab_risk:
@@ -283,40 +346,55 @@ with tab_risk:
 
     st.subheader("VaR backtest — did the risk model actually work?")
     if var_bt is not None:
-        st.caption(
-            "Kupiec tests whether the NUMBER of breaches matches expectation. Christoffersen tests whether "
-            "breaches were independent (not clustered). A model can pass one and fail the other."
-        )
-        st.dataframe(var_bt, use_container_width=True)
+        n_pass = int((var_bt["verdict"] == "PASS").sum()) if "verdict" in var_bt.columns else None
+        if n_pass is not None:
+            st.info(
+                f"**Bottom line:** {n_pass} of {len(var_bt)} VaR configurations passed the joint "
+                "Kupiec + Christoffersen backtest. A REJECT below usually means breaches clustered "
+                "around a specific crash instead of spreading out evenly — a real limitation, kept "
+                "visible rather than swapped for a method that happens to pass."
+            )
+        with st.expander("Full VaR backtest table"):
+            st.caption(
+                "Kupiec tests whether the NUMBER of breaches matches expectation. Christoffersen tests "
+                "whether breaches were independent (not clustered). A model can pass one and fail the other."
+            )
+            st.dataframe(var_bt, use_container_width=True)
     else:
         st.info("Run `python scripts/run_backtests.py` to generate this table.")
 
     if var_sum is not None:
-        st.subheader("VaR / CVaR by method")
-        st.dataframe(var_sum.style.format("{:.4f}"), use_container_width=True)
+        with st.expander("VaR / CVaR by method"):
+            st.dataframe(var_sum.style.format("{:.4f}"), use_container_width=True)
 
     st.subheader("Volatility forecasting — LightGBM vs. EWMA vs. GARCH")
     if vol_cmp is not None:
-        st.caption(
-            "Lower RMSE/QLIKE is better. QLIKE is the metric the volatility-forecasting literature actually "
-            "uses because it's robust to noise in the realised-vol proxy."
-        )
-        st.dataframe(vol_cmp.style.format(precision=4), use_container_width=True)
+        if "QLIKE" in vol_cmp.columns:
+            best = vol_cmp["QLIKE"].astype(float).idxmin()
+            st.info(f"**Bottom line:** **{best}** has the lowest QLIKE (the metric that matters most here) — see below for whether that lead is statistically significant.")
+        with st.expander("Full model comparison table"):
+            st.caption(
+                "Lower RMSE/QLIKE is better. QLIKE is what the volatility-forecasting literature actually "
+                "uses because it's robust to noise in the realised-vol proxy."
+            )
+            st.dataframe(vol_cmp.style.format(precision=4), use_container_width=True)
         dm = load_results_table("vol_dm_tests.csv")
         if dm is not None:
-            st.caption("Diebold-Mariano test for whether the improvement over each baseline is significant:")
-            st.dataframe(dm, use_container_width=True)
+            with st.expander("Diebold-Mariano significance tests"):
+                st.caption("Is the improvement over each baseline statistically significant, or could it be noise?")
+                st.dataframe(dm, use_container_width=True)
     else:
         st.info("Run `python scripts/run_vol_model.py` to generate this table.")
 
 # ============================================================= About tab ===
 with tab_about:
     st.subheader("What this is")
+    n_stocks = len(close.columns)
     st.markdown(
-        """
-RiskLens is a walk-forward-backtested portfolio construction engine I built over ~120 liquid NSE
-stocks (2015–2025). It's a resume / learning project, **not financial advice**, and shouldn't be
-used to make real investment decisions.
+        f"""
+RiskLens is a walk-forward-backtested portfolio construction engine I built over {n_stocks} liquid
+NSE stocks (2015–2025). It's a resume / learning project, **not financial advice**, and shouldn't
+be used to make real investment decisions.
 
 **Limitations worth knowing before trusting any number here:**
 

@@ -1,7 +1,7 @@
 comparison,loss,DM_stat,p_value,n,verdict
-LightGBM vs Random walk (RV21),QLIKE,-10.678,0.0,10658,LightGBM better (5%)
-LightGBM vs Random walk (RV21),MSE,-9.065,0.0,10658,LightGBM better (5%)
-LightGBM vs EWMA(0.94),QLIKE,-4.46,0.0,10658,LightGBM better (5%)
-LightGBM vs EWMA(0.94),MSE,-6.94,0.0,10658,LightGBM better (5%)
-"LightGBM vs GARCH(1,1)-t",QLIKE,-1.402,0.1609,10590,no significant difference
-"LightGBM vs GARCH(1,1)-t",MSE,-8.608,0.0,10590,LightGBM better (5%)
+LightGBM vs Random walk (RV21),QLIKE,-16.276,0.0,18660,LightGBM better (5%)
+LightGBM vs Random walk (RV21),MSE,-10.825,0.0,18660,LightGBM better (5%)
+LightGBM vs EWMA(0.94),QLIKE,-7.328,0.0,18660,LightGBM better (5%)
+LightGBM vs EWMA(0.94),MSE,-9.549,0.0,18660,LightGBM better (5%)
+"LightGBM vs GARCH(1,1)-t",QLIKE,-2.98,0.0029,18339,LightGBM better (5%)
+"LightGBM vs GARCH(1,1)-t",MSE,-12.483,0.0,18339,LightGBM better (5%)
